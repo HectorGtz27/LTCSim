@@ -49,6 +49,12 @@ def evaluar_parada_baño(hora, checkpoint, checkpoint_para_baño):
     probabilidad_base = 0.1 if 360 <= hora <= 720 else 0.05
     return random.random() < probabilidad_base
 
+# Función para determinar si se necesita una parada para comer
+def evaluar_parada_comida(hora_actual):
+    hora_minima_comida = 14 * 60  # 2:00 PM en minutos
+    hora_maxima_comida = 16 * 60  # 4:00 PM en minutos
+    return hora_minima_comida <= hora_actual <= hora_maxima_comida
+
 # Simular el trayecto del tráiler
 def simular_trayecto(hora_inicio, hora_objetivo):
     eventos = []
@@ -80,6 +86,12 @@ def simular_trayecto(hora_inicio, hora_objetivo):
             eventos.append(f"Parada para baño en el checkpoint {checkpoint['checkpoint']}")
             print("Parada para baño")
             tiempo_entre_checkpoints += timedelta(minutes=15)  # Se agregan 15 minutos por la parada para el baño
+
+        # Evaluar parada para comer entre las 2:00 PM y 4:00 PM
+        if evaluar_parada_comida(hora_actual.hour * 60 + hora_actual.minute):
+            eventos.append(f"Parada para comer en el checkpoint {checkpoint['checkpoint']}")
+            print("Parada para comer")
+            tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por la parada para comer
 
         # Avanzar tiempo con el tiempo por defecto más cualquier tiempo adicional
         duracion_total += tiempo_entre_checkpoints
