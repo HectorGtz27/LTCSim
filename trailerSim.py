@@ -190,8 +190,3 @@ if __name__ == "__main__":
     else:
         print("No hubo eventos durante el trayecto.")
 
-    # Comprobar si llegó a tiempo
-    if hora_llegada <= hora_objetivo:
-        print("\nEl tráiler llegó a tiempo o antes de las 5:00 PM.")
-    else:
-        print("\nEl tráiler se retrasó y llegó después de las 5:00 PM.")
