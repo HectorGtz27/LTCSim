@@ -1,0 +1,9 @@
+{
+    "hora_inicio": "13:00",
+    "tiempos_checkpoint": {
+        "Checkpoint 1": 70,
+        "Checkpoint 2": 610,
+        "Checkpoint 3": 625
+    },
+    "hora_llegada_calculada": "10:45"
+}

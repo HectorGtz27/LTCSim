@@ -79,6 +79,7 @@ def simular_trayecto(hora_inicio, hora_objetivo):
     ha_comido = False  # Bandera para controlar si ya ha comido
     ha_cenado = False  # Bandera para controlar si ya ha cenado
     fatiga = 0  # Estado inicial de fatiga
+    tiempos_checkpoint = {}  # Diccionario para guardar los tiempos de cada checkpoint
 
     # Seleccionar aleatoriamente un checkpoint para forzar la parada para el baño
     checkpoint_para_baño = random.choice([checkpoint["checkpoint"] for checkpoint in data["checkpoints"]])
@@ -134,7 +135,7 @@ def simular_trayecto(hora_inicio, hora_objetivo):
             tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por bañar el cargamento
 
         # Evaluar fatiga
-        fatiga += (tiempo_entre_checkpoints.total_seconds() // 3600) * 10  # Incrementa fatiga 10% cada 60 minutos
+        fatiga += (tiempo_entre_checkpoints.total_seconds() // 1800) * 20  # Incrementa fatiga 20% cada 30 minutos
         if evaluar_fatiga(fatiga):
             eventos.append(f"Fatiga al {fatiga}%, se detiene a dormir en el checkpoint {checkpoint['checkpoint']}")
             print(f"¡Fatiga al {fatiga}%! Se necesita dormir.")
@@ -151,21 +152,32 @@ def simular_trayecto(hora_inicio, hora_objetivo):
         duracion_total += tiempo_entre_checkpoints
         hora_actual += tiempo_entre_checkpoints
         
-        # Calcular y mostrar el tiempo tardado en el checkpoint
-        tiempo_tardado = hora_actual - inicio_checkpoint
-        print(f"Tiempo tardado en el checkpoint {checkpoint['checkpoint']}: {int(tiempo_tardado.total_seconds() // 60)} minutos")
+        # Calcular y guardar el tiempo tardado en el checkpoint
+        tiempo_tardado = int(tiempo_entre_checkpoints.total_seconds() // 60)
+        tiempos_checkpoint[f"Checkpoint {checkpoint['checkpoint']}"] = tiempo_tardado
+        print(f"Tiempo tardado en el checkpoint {checkpoint['checkpoint']}: {tiempo_tardado} minutos")
 
     hora_llegada = (datetime.combine(datetime.today(), hora_inicio) + duracion_total).time()
     print(f"\nHora de inicio del tráiler: {hora_inicio.strftime('%H:%M')}")
     print(f"Hora esperada de llegada: {hora_objetivo.strftime('%H:%M')}")
     print(f"Hora de llegada calculada: {hora_llegada.strftime('%H:%M')}")
 
+    # Guardar el resultado en un archivo JSON
+    output_data = {
+        "hora_inicio": hora_inicio.strftime('%H:%M'),
+        "tiempos_checkpoint": tiempos_checkpoint,
+        "hora_llegada_calculada": hora_llegada.strftime('%H:%M')
+    }
+
+    with open('output.json', 'w') as output_file:
+        json.dump(output_data, output_file, indent=4)
+
     return eventos, hora_llegada
 
 # Ejecutar la simulación
 if __name__ == "__main__":
     # Parámetros iniciales
-    hora_inicio = datetime.strptime('12:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
+    hora_inicio = datetime.strptime('13:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
     hora_objetivo = datetime.strptime(data["final"]["hora_llegada_esperada"], '%H:%M').time()  # Hora objetivo de llegada: 5:00 PM
 
     print("Iniciando la simulación del trayecto del tráiler...\n")
