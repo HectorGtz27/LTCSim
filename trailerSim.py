@@ -25,7 +25,7 @@ data = {
     ],
     "final": {
         "checkpoint": 4,
-        "hora_llegada_esperada": "6:00"
+        "hora_llegada_esperada": "17:00"
     }
 }
 
@@ -49,6 +49,14 @@ def evaluar_parada_baño(hora, checkpoint, checkpoint_para_baño):
     probabilidad_base = 0.1 if 360 <= hora <= 720 else 0.05
     return random.random() < probabilidad_base
 
+# Función para determinar si se necesita una parada para desayunar
+def evaluar_parada_desayuno(hora_actual, ha_desayunado):
+    if ha_desayunado:
+        return False  # Si ya ha desayunado, no puede desayunar de nuevo
+    hora_minima_desayuno = 7 * 60  # 7:00 AM en minutos
+    hora_maxima_desayuno = 10 * 60  # 10:00 AM en minutos
+    return hora_minima_desayuno <= hora_actual <= hora_maxima_desayuno
+
 # Función para determinar si se necesita una parada para comer
 def evaluar_parada_comida(hora_actual, ha_comido):
     if ha_comido:
@@ -56,6 +64,14 @@ def evaluar_parada_comida(hora_actual, ha_comido):
     hora_minima_comida = 14 * 60  # 2:00 PM en minutos
     hora_maxima_comida = 16 * 60  # 4:00 PM en minutos
     return hora_minima_comida <= hora_actual <= hora_maxima_comida
+
+# Función para determinar si se necesita una parada para cenar
+def evaluar_parada_cena(hora_actual, ha_cenado):
+    if ha_cenado:
+        return False  # Si ya ha cenado, no puede cenar de nuevo
+    hora_minima_cena = 22 * 60  # 10:00 PM en minutos
+    hora_maxima_cena = 1 * 60  # 1:00 AM en minutos
+    return (hora_actual >= hora_minima_cena or hora_actual <= hora_maxima_cena)
 
 # Función para determinar si se necesita dormir debido a la fatiga
 def evaluar_fatiga(fatiga):
@@ -74,7 +90,9 @@ def simular_trayecto(hora_inicio, hora_objetivo):
     eventos = []
     hora_actual = datetime.combine(datetime.today(), hora_inicio)
     duracion_total = timedelta()  # Inicializa la duración total en 0
+    ha_desayunado = False  # Bandera para controlar si ya ha desayunado
     ha_comido = False  # Bandera para controlar si ya ha comido
+    ha_cenado = False  # Bandera para controlar si ya ha cenado
     fatiga = 0  # Estado inicial de fatiga
 
     # Seleccionar aleatoriamente un checkpoint para forzar la parada para el baño
@@ -103,6 +121,13 @@ def simular_trayecto(hora_inicio, hora_objetivo):
             print("Parada para baño")
             tiempo_entre_checkpoints += timedelta(minutes=15)  # Se agregan 15 minutos por la parada para el baño
 
+        # Evaluar parada para desayunar entre las 7:00 AM y 10:00 AM
+        if evaluar_parada_desayuno(hora_actual.hour * 60 + hora_actual.minute, ha_desayunado):
+            eventos.append(f"Parada para desayunar en el checkpoint {checkpoint['checkpoint']}")
+            print("Parada para desayunar")
+            tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por la parada para desayunar
+            ha_desayunado = True  # Marcar que ya ha desayunado
+
         # Evaluar parada para comer entre las 2:00 PM y 4:00 PM
         if evaluar_parada_comida(hora_actual.hour * 60 + hora_actual.minute, ha_comido):
             eventos.append(f"Parada para comer en el checkpoint {checkpoint['checkpoint']}")
@@ -110,8 +135,15 @@ def simular_trayecto(hora_inicio, hora_objetivo):
             tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por la parada para comer
             ha_comido = True  # Marcar que ya ha comido
 
+        # Evaluar parada para cenar entre las 10:00 PM y 1:00 AM
+        if evaluar_parada_cena(hora_actual.hour * 60 + hora_actual.minute, ha_cenado):
+            eventos.append(f"Parada para cenar en el checkpoint {checkpoint['checkpoint']}")
+            print("Parada para cenar")
+            tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por la parada para cenar
+            ha_cenado = True  # Marcar que ya ha cenado
+
         # Evaluar fatiga
-        fatiga += (tiempo_entre_checkpoints.total_seconds() // 3600) * 20  # Incrementa fatiga 20% cada 1 hora
+        fatiga += (tiempo_entre_checkpoints.total_seconds() // 1800) * 20  # Incrementa fatiga 20% cada 30 minutos
         if evaluar_fatiga(fatiga):
             eventos.append(f"Fatiga al {fatiga}%, se detiene a dormir en el checkpoint {checkpoint['checkpoint']}")
             print(f"¡Fatiga al {fatiga}%! Se necesita dormir.")
@@ -142,7 +174,7 @@ def simular_trayecto(hora_inicio, hora_objetivo):
 # Ejecutar la simulación
 if __name__ == "__main__":
     # Parámetros iniciales
-    hora_inicio = datetime.strptime('2:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
+    hora_inicio = datetime.strptime('13:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
     hora_objetivo = datetime.strptime(data["final"]["hora_llegada_esperada"], '%H:%M').time()  # Hora objetivo de llegada: 5:00 PM
 
     print("Iniciando la simulación del trayecto del tráiler...\n")
