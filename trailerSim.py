@@ -1,33 +1,10 @@
 import random
+import json
 from datetime import datetime, timedelta
 
-# JSON con los estados de los checkpoints
-data = {
-    "checkpoints": [
-        {
-            "checkpoint": 1,
-            "clima": 0,
-            "mantenimiento": 0,
-            "tiempo_por_defecto_minutos": 70
-        },
-        {
-            "checkpoint": 2,
-            "clima": 0,
-            "mantenimiento": 1,
-            "tiempo_por_defecto_minutos": 100
-        },
-        {
-            "checkpoint": 3,
-            "clima": 2,
-            "mantenimiento": 1,
-            "tiempo_por_defecto_minutos": 70
-        }
-    ],
-    "final": {
-        "checkpoint": 4,
-        "hora_llegada_esperada": "14:00"
-    }
-}
+# Leer datos desde input.json
+with open('input.json', 'r') as file:
+    data = json.load(file)
 
 # Probabilidades de eventos
 PROBABILIDAD_CLIMA = {0: 0.01, 1: 0.10, 2: 0.20, 3: 0.30}  # Aumenta con la gravedad del clima
@@ -201,4 +178,8 @@ if __name__ == "__main__":
     else:
         print("No hubo eventos durante el trayecto.")
 
-
+    # Comprobar si llegó a tiempo
+    if hora_llegada <= hora_objetivo:
+        print("\nEl tráiler llegó a tiempo o antes de las 5:00 PM.")
+    else:
+        print("\nEl tráiler se retrasó y llegó después de las 5:00 PM.")
