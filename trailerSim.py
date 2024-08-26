@@ -25,7 +25,7 @@ data = {
     ],
     "final": {
         "checkpoint": 4,
-        "hora_llegada_esperada": "17:00"
+        "hora_llegada_esperada": "14:00"
     }
 }
 
@@ -85,6 +85,14 @@ def evaluar_robo(hora_actual):
         return random.randint(1, 10) < 5  # Si el número es menor que 5, el cargamento es robado
     return False
 
+# Función para determinar si el cargamento necesita ser bañado
+def evaluar_bano_cargamento(hora_actual, checkpoint):
+    if checkpoint == 3:
+        hora_minima_bano = 7 * 60  # 7:00 AM en minutos
+        hora_maxima_bano = 16 * 60  # 4:00 PM en minutos
+        return hora_minima_bano <= hora_actual <= hora_maxima_bano
+    return False
+
 # Simular el trayecto del tráiler
 def simular_trayecto(hora_inicio, hora_objetivo):
     eventos = []
@@ -142,8 +150,14 @@ def simular_trayecto(hora_inicio, hora_objetivo):
             tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por la parada para cenar
             ha_cenado = True  # Marcar que ya ha cenado
 
+        # Evaluar si se necesita bañar el cargamento en el checkpoint 3 entre 7:00 AM y 4:00 PM
+        if evaluar_bano_cargamento(hora_actual.hour * 60 + hora_actual.minute, checkpoint["checkpoint"]):
+            eventos.append(f"Baño de cargamento en el checkpoint {checkpoint['checkpoint']} a las {hora_actual.strftime('%H:%M')}")
+            print("¡Baño de cargamento!")
+            tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por bañar el cargamento
+
         # Evaluar fatiga
-        fatiga += (tiempo_entre_checkpoints.total_seconds() // 1800) * 20  # Incrementa fatiga 20% cada 30 minutos
+        fatiga += (tiempo_entre_checkpoints.total_seconds() // 3600) * 10  # Incrementa fatiga 10% cada 60 minutos
         if evaluar_fatiga(fatiga):
             eventos.append(f"Fatiga al {fatiga}%, se detiene a dormir en el checkpoint {checkpoint['checkpoint']}")
             print(f"¡Fatiga al {fatiga}%! Se necesita dormir.")
@@ -174,7 +188,7 @@ def simular_trayecto(hora_inicio, hora_objetivo):
 # Ejecutar la simulación
 if __name__ == "__main__":
     # Parámetros iniciales
-    hora_inicio = datetime.strptime('13:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
+    hora_inicio = datetime.strptime('12:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
     hora_objetivo = datetime.strptime(data["final"]["hora_llegada_esperada"], '%H:%M').time()  # Hora objetivo de llegada: 5:00 PM
 
     print("Iniciando la simulación del trayecto del tráiler...\n")
@@ -187,8 +201,4 @@ if __name__ == "__main__":
     else:
         print("No hubo eventos durante el trayecto.")
 
-    # Comprobar si llegó a tiempo
-    if hora_llegada <= hora_objetivo:
-        print("\nEl tráiler llegó a tiempo o antes de las 5:00 PM.")
-    else:
-        print("\nEl tráiler se retrasó y llegó después de las 5:00 PM.")
+
