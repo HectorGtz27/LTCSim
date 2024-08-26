@@ -50,16 +50,24 @@ def evaluar_parada_baño(hora, checkpoint, checkpoint_para_baño):
     return random.random() < probabilidad_base
 
 # Función para determinar si se necesita una parada para comer
-def evaluar_parada_comida(hora_actual):
+def evaluar_parada_comida(hora_actual, ha_comido):
+    if ha_comido:
+        return False  # Si ya ha comido, no puede comer de nuevo
     hora_minima_comida = 14 * 60  # 2:00 PM en minutos
     hora_maxima_comida = 16 * 60  # 4:00 PM en minutos
     return hora_minima_comida <= hora_actual <= hora_maxima_comida
+
+# Función para determinar si se necesita dormir debido a la fatiga
+def evaluar_fatiga(fatiga):
+    return fatiga > 70  # Si la fatiga supera el 70%, se necesita dormir
 
 # Simular el trayecto del tráiler
 def simular_trayecto(hora_inicio, hora_objetivo):
     eventos = []
     hora_actual = datetime.combine(datetime.today(), hora_inicio)
     duracion_total = timedelta()  # Inicializa la duración total en 0
+    ha_comido = False  # Bandera para controlar si ya ha comido
+    fatiga = 0  # Estado inicial de fatiga
 
     # Seleccionar aleatoriamente un checkpoint para forzar la parada para el baño
     checkpoint_para_baño = random.choice([checkpoint["checkpoint"] for checkpoint in data["checkpoints"]])
@@ -88,10 +96,19 @@ def simular_trayecto(hora_inicio, hora_objetivo):
             tiempo_entre_checkpoints += timedelta(minutes=15)  # Se agregan 15 minutos por la parada para el baño
 
         # Evaluar parada para comer entre las 2:00 PM y 4:00 PM
-        if evaluar_parada_comida(hora_actual.hour * 60 + hora_actual.minute):
+        if evaluar_parada_comida(hora_actual.hour * 60 + hora_actual.minute, ha_comido):
             eventos.append(f"Parada para comer en el checkpoint {checkpoint['checkpoint']}")
             print("Parada para comer")
             tiempo_entre_checkpoints += timedelta(minutes=30)  # Se agregan 30 minutos por la parada para comer
+            ha_comido = True  # Marcar que ya ha comido
+
+        # Evaluar fatiga
+        fatiga += (tiempo_entre_checkpoints.total_seconds() // 1800) * 20  # Incrementa fatiga 20% cada 30 minutos
+        if evaluar_fatiga(fatiga):
+            eventos.append(f"Fatiga al {fatiga}%, se detiene a dormir en el checkpoint {checkpoint['checkpoint']}")
+            print(f"¡Fatiga al {fatiga}%! Se necesita dormir.")
+            tiempo_entre_checkpoints += timedelta(hours=8)  # Se agregan 8 horas por dormir
+            fatiga = 0  # Resetea la fatiga después de dormir
 
         # Avanzar tiempo con el tiempo por defecto más cualquier tiempo adicional
         duracion_total += tiempo_entre_checkpoints
@@ -124,8 +141,4 @@ if __name__ == "__main__":
     else:
         print("No hubo eventos durante el trayecto.")
 
-    # Comprobar si llegó a tiempo
-    if hora_llegada <= hora_objetivo:
-        print("\nEl tráiler llegó a tiempo o antes de las 5:00 PM.")
-    else:
-        print("\nEl tráiler se retrasó y llegó después de las 5:00 PM.")
+
