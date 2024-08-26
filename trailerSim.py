@@ -166,6 +166,7 @@ def simular_trayecto(hora_inicio, hora_objetivo):
     output_data = {
         "hora_inicio": hora_inicio.strftime('%H:%M'),
         "tiempos_checkpoint": tiempos_checkpoint,
+        "hora_llegada_esperada": hora_objetivo.strftime('%H:%M'),
         "hora_llegada_calculada": hora_llegada.strftime('%H:%M')
     }
 
@@ -177,7 +178,7 @@ def simular_trayecto(hora_inicio, hora_objetivo):
 # Ejecutar la simulación
 if __name__ == "__main__":
     # Parámetros iniciales
-    hora_inicio = datetime.strptime('13:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
+    hora_inicio = datetime.strptime(data["inicio"]["hora_inicio"], '%H:%M').time()  # Hora de inicio desde input.json
     hora_objetivo = datetime.strptime(data["final"]["hora_llegada_esperada"], '%H:%M').time()  # Hora objetivo de llegada: 5:00 PM
 
     print("Iniciando la simulación del trayecto del tráiler...\n")
@@ -190,3 +191,8 @@ if __name__ == "__main__":
     else:
         print("No hubo eventos durante el trayecto.")
 
+    # Comprobar si llegó a tiempo
+    if hora_llegada <= hora_objetivo:
+        print("\nEl tráiler llegó a tiempo o antes de las 5:00 PM.")
+    else:
+        print("\nEl tráiler se retrasó y llegó después de las 5:00 PM.")

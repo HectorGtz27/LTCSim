@@ -1,4 +1,7 @@
 {
+  "inicio": {
+    "hora_inicio": "13:00"
+  },
   "checkpoints": [
     {
       "checkpoint": 1,
