@@ -25,7 +25,7 @@ data = {
     ],
     "final": {
         "checkpoint": 4,
-        "hora_llegada_esperada": "17:00"
+        "hora_llegada_esperada": "6:00"
     }
 }
 
@@ -60,6 +60,14 @@ def evaluar_parada_comida(hora_actual, ha_comido):
 # Función para determinar si se necesita dormir debido a la fatiga
 def evaluar_fatiga(fatiga):
     return fatiga > 70  # Si la fatiga supera el 70%, se necesita dormir
+
+# Función para determinar si el cargamento es robado entre las 2 AM y 4 AM
+def evaluar_robo(hora_actual):
+    hora_minima_robo = 2 * 60  # 2:00 AM en minutos
+    hora_maxima_robo = 4 * 60  # 4:00 AM en minutos
+    if hora_minima_robo <= hora_actual <= hora_maxima_robo:
+        return random.randint(1, 10) < 5  # Si el número es menor que 5, el cargamento es robado
+    return False
 
 # Simular el trayecto del tráiler
 def simular_trayecto(hora_inicio, hora_objetivo):
@@ -103,12 +111,18 @@ def simular_trayecto(hora_inicio, hora_objetivo):
             ha_comido = True  # Marcar que ya ha comido
 
         # Evaluar fatiga
-        fatiga += (tiempo_entre_checkpoints.total_seconds() // 1800) * 20  # Incrementa fatiga 20% cada 30 minutos
+        fatiga += (tiempo_entre_checkpoints.total_seconds() // 3600) * 20  # Incrementa fatiga 20% cada 1 hora
         if evaluar_fatiga(fatiga):
             eventos.append(f"Fatiga al {fatiga}%, se detiene a dormir en el checkpoint {checkpoint['checkpoint']}")
             print(f"¡Fatiga al {fatiga}%! Se necesita dormir.")
             tiempo_entre_checkpoints += timedelta(hours=8)  # Se agregan 8 horas por dormir
             fatiga = 0  # Resetea la fatiga después de dormir
+
+        # Evaluar robo de cargamento entre las 2:00 AM y 4:00 AM
+        if evaluar_robo(hora_actual.hour * 60 + hora_actual.minute):
+            eventos.append(f"¡Robo de cargamento en el checkpoint {checkpoint['checkpoint']} a las {hora_actual.strftime('%H:%M')}!")
+            print(f"¡Robo de cargamento en el checkpoint {checkpoint['checkpoint']}!")
+            tiempo_entre_checkpoints += timedelta(minutes=60)  # Se agregan 60 minutos por el robo
 
         # Avanzar tiempo con el tiempo por defecto más cualquier tiempo adicional
         duracion_total += tiempo_entre_checkpoints
@@ -128,7 +142,7 @@ def simular_trayecto(hora_inicio, hora_objetivo):
 # Ejecutar la simulación
 if __name__ == "__main__":
     # Parámetros iniciales
-    hora_inicio = datetime.strptime('13:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
+    hora_inicio = datetime.strptime('2:00', '%H:%M').time()  # Hora fija de inicio: 1:00 PM
     hora_objetivo = datetime.strptime(data["final"]["hora_llegada_esperada"], '%H:%M').time()  # Hora objetivo de llegada: 5:00 PM
 
     print("Iniciando la simulación del trayecto del tráiler...\n")
@@ -141,4 +155,8 @@ if __name__ == "__main__":
     else:
         print("No hubo eventos durante el trayecto.")
 
-
+    # Comprobar si llegó a tiempo
+    if hora_llegada <= hora_objetivo:
+        print("\nEl tráiler llegó a tiempo o antes de las 5:00 PM.")
+    else:
+        print("\nEl tráiler se retrasó y llegó después de las 5:00 PM.")
